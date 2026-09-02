@@ -13,12 +13,12 @@ todo_datas = {
         "is_done" : True,
     },
     2: {
-        "id" :1,
+        "id" :2,
         "contents":"실전! FastAPI 섹션 1 수강",
         "is_done" : False,
     },
     3: {
-        "id" :1,
+        "id" :3,
         "contents":"실전! FastAPI 섹션 2 수강",
         "is_done" : False,
     }
@@ -31,4 +31,6 @@ def get_todos(order:str | None = None ):
         return ret[::-1]
     return ret
 
-
+@app.get("/todos/{todo_id}")
+def get_todo_handler(todo_id:int):
+    return todo_datas.get(todo_id, {})
