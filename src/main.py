@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -45,3 +45,14 @@ class CreateTodoRequest(BaseModel):
 def create_todo_handler(request: CreateTodoRequest):
     todo_datas[request.id] = request.dict()
     return todo_datas[request.id]
+
+@app.patch("/todos/{todo_id}")
+def update_todo_handler(
+        todo_id:int,
+        is_done :bool = Body(..., embed=True),
+):
+    todo = todo_datas.get(todo_id)
+    if todo:
+        todo["is_done"] = is_done
+        return todo
+    return {}
