@@ -1,0 +1,17 @@
+# Virtual environment (this project root doubles as the venv)
+bin/
+include/
+lib/
+pyvenv.cfg
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor
+.idea/
+.vscode/
+
+# OS
+.DS_Store
