@@ -4,12 +4,12 @@ from typing import List
 from fastapi import FastAPI, Body, HTTPException, Depends
 # pydantic 패키지에서 BaseModel(요청/응답 데이터 검증용 클래스)을 가져옴
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, session
 from starlette import status
 
 from database.connection import get_db
 from database.orm import Todo
-from database.repository import get_todos
+from database.repository import get_todos, get_todo_by_todo_id
 from schema.response import ListTodoResponse, ToDoSchema
 
 # FastAPI 클래스를 인스턴스화(실제 실행 가능한 객체로 생성) -> 이 app이 서버의 진입점
@@ -61,10 +61,11 @@ def get_todos_handler(
 # GET /todos/{todo_id}
 # todo_id: 경로의 {todo_id}와 이름이 일치하므로 path parameter -> 기본값 없어 필수
 @app.get("/todos/{todo_id}", status_code=200)
-def get_todo_handler(todo_id:int):
-    todo = todo_datas.get(todo_id)
+def get_todo_handler(todo_id:int, session: Session = Depends(get_db))-> ToDoSchema:
+    todo: Todo | None = get_todo_by_todo_id(session=session, todo_id=todo_id)
+    # todo = todo_datas.get(todo_id)
     if todo:
-        return todo
+        return ToDoSchema.from_orm(todo)
     raise HTTPException(status_code=404, detail='ToDo Not Found')
 
 
