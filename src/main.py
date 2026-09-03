@@ -10,6 +10,7 @@ from starlette import status
 from database.connection import get_db
 from database.orm import Todo
 from database.repository import get_todos
+from schema.response import ListTodoResponse, ToDoSchema
 
 # FastAPI 클래스를 인스턴스화(실제 실행 가능한 객체로 생성) -> 이 app이 서버의 진입점
 app = FastAPI()
@@ -41,15 +42,21 @@ todo_datas = {
 
 # GET /todos?order=DESC
 # order: 함수에만 있고 경로({})에는 없으므로 query parameter -> 기본값(None)이 있어 선택값
-@app.get("/todos", status_code=200)
+# response_model=ListTodoResponse -> Swagger가 이 값을 보고 예시 스키마/응답 형식을 문서에 표시함
+@app.get("/todos", status_code=200, response_model=ListTodoResponse)
 def get_todos_handler(
     order: str | None = None,
     session: Session = Depends(get_db),
 ):
     todos: List[Todo] = get_todos(session=session)  # database/repository.py의 DB 조회 함수 호출
     if order and order == 'DESC':
-        return todos[::-1]  # 역순 정렬
-    return todos
+        todos = todos[::-1]  # 역순 정렬
+    return ListTodoResponse(
+        todos = [
+            ToDoSchema.model_validate(todo)  # from_orm(deprecated) 대신 model_validate 사용
+            for todo in todos
+        ]
+    )
 
 # GET /todos/{todo_id}
 # todo_id: 경로의 {todo_id}와 이름이 일치하므로 path parameter -> 기본값 없어 필수
