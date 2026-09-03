@@ -3,14 +3,13 @@ from typing import List
 
 from fastapi import FastAPI, Body, HTTPException, Depends
 # pydantic 패키지에서 BaseModel(요청/응답 데이터 검증용 클래스)을 가져옴
-from pydantic import BaseModel
-from sqlalchemy.orm import Session, session
-from starlette import status
+from sqlalchemy.orm import Session
 
 from database.connection import get_db
 from database.orm import Todo
 from database.repository import get_todos, get_todo_by_todo_id
-from schema.response import ListTodoResponse, ToDoSchema
+from schema.request import CreateTodoRequest
+from schema.response import ToDoListSchema, ToDoSchema
 
 # FastAPI 클래스를 인스턴스화(실제 실행 가능한 객체로 생성) -> 이 app이 서버의 진입점
 app = FastAPI()
@@ -43,7 +42,7 @@ todo_datas = {
 # GET /todos?order=DESC
 # order: 함수에만 있고 경로({})에는 없으므로 query parameter -> 기본값(None)이 있어 선택값
 # response_model=ListTodoResponse -> Swagger가 이 값을 보고 예시 스키마/응답 형식을 문서에 표시함
-@app.get("/todos", status_code=200, response_model=ListTodoResponse)
+@app.get("/todos", status_code=200, response_model=ToDoListSchema)
 def get_todos_handler(
     order: str | None = None,
     session: Session = Depends(get_db),
@@ -51,7 +50,7 @@ def get_todos_handler(
     todos: List[Todo] = get_todos(session=session)  # database/repository.py의 DB 조회 함수 호출
     if order and order == 'DESC':
         todos = todos[::-1]  # 역순 정렬
-    return ListTodoResponse(
+    return ToDoListSchema(
         todos = [
             ToDoSchema.model_validate(todo)  # from_orm(deprecated) 대신 model_validate 사용
             for todo in todos
@@ -71,10 +70,6 @@ def get_todo_handler(todo_id:int, session: Session = Depends(get_db))-> ToDoSche
 
 # POST body 검증용 스키마 (pydantic 모델)
 # 클라이언트가 보낸 JSON을 이 필드들에 맞춰 자동 검증/변환해줌
-class CreateTodoRequest(BaseModel):
-    id: int
-    contents: str
-    is_done: bool
 
 # POST /todos
 # request: CreateTodoRequest -> FastAPI가 요청 body(JSON)를 자동으로 이 타입 객체로 변환해서 넘겨줌

@@ -11,5 +11,5 @@ class ToDoSchema(BaseModel):
     # SQLAlchemy 객체(속성 접근)를 그대로 읽어서 검증/변환할 수 있게 해줌
     model_config = ConfigDict(from_attributes=True)
 
-class ListTodoResponse(BaseModel):
+class ToDoListSchema(BaseModel):
     todos: List[ToDoSchema]
