@@ -1,8 +1,15 @@
 # fastapi 패키지에서 FastAPI 클래스, Body(요청 body 값을 세부 제어하는 도구)를 가져옴
-from fastapi import FastAPI, Body, HTTPException
+from typing import List
+
+from fastapi import FastAPI, Body, HTTPException, Depends
 # pydantic 패키지에서 BaseModel(요청/응답 데이터 검증용 클래스)을 가져옴
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 from starlette import status
+
+from database.connection import get_db
+from database.orm import Todo
+from database.repository import get_todos
 
 # FastAPI 클래스를 인스턴스화(실제 실행 가능한 객체로 생성) -> 이 app이 서버의 진입점
 app = FastAPI()
@@ -35,11 +42,14 @@ todo_datas = {
 # GET /todos?order=DESC
 # order: 함수에만 있고 경로({})에는 없으므로 query parameter -> 기본값(None)이 있어 선택값
 @app.get("/todos", status_code=200)
-def get_todos(order:str | None = None ):
-    ret = list(todo_datas.values())
+def get_todos_handler(
+    order: str | None = None,
+    session: Session = Depends(get_db),
+):
+    todos: List[Todo] = get_todos(session=session)  # database/repository.py의 DB 조회 함수 호출
     if order and order == 'DESC':
-        return ret[::-1]  # 역순 정렬
-    return ret
+        return todos[::-1]  # 역순 정렬
+    return todos
 
 # GET /todos/{todo_id}
 # todo_id: 경로의 {todo_id}와 이름이 일치하므로 path parameter -> 기본값 없어 필수

@@ -12,3 +12,7 @@ class Todo(Base):
 
     def __repr__(self):
         return f"Todo(id={self.id}, contents={self.contents}, is_done={self.is_done})"
+
+
+class Session:
+    pass
