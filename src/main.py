@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from database.connection import get_db
 from database.orm import Todo
-from database.repository import get_todos, get_todo_by_todo_id
+from database.repository import get_todos, get_todo_by_todo_id, create_todo
 from schema.request import CreateTodoRequest
 from schema.response import ToDoListSchema, ToDoSchema
 
@@ -73,12 +73,16 @@ def get_todo_handler(todo_id:int, session: Session = Depends(get_db))-> ToDoSche
 
 # POST /todos
 # request: CreateTodoRequest -> FastAPI가 요청 body(JSON)를 자동으로 이 타입 객체로 변환해서 넘겨줌
-@app.post("/todos", status_code = 201)
-def create_todo_handler(request: CreateTodoRequest):
-    # request.dict(): pydantic 객체 -> 순수 딕셔너리로 변환
-    # todo_datas[request.id]: request.id 값을 "키"로 사용해 새 항목 추가(이미 있으면 덮어씀)
-    todo_datas[request.id] = request.dict()
-    return todo_datas[request.id]
+@app.post("/todos", status_code = 201, response_model=ToDoSchema)
+def create_todo_handler(
+    request: CreateTodoRequest,
+    session: Session = Depends(get_db),
+):
+    # Todo.create(): CreateTodoRequest -> SQLAlchemy Todo 객체로 변환
+    todo: Todo = Todo.create(request=request)
+    # create_todo(): DB에 실제로 저장(insert)하고, id 등이 채워진 todo를 반환
+    todo: Todo = create_todo(session=session, todo=todo)
+    return todo
 
 # PATCH /todos/{todo_id}
 # todo_id: path parameter (필수)
